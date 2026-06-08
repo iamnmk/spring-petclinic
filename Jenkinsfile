@@ -5,7 +5,7 @@ pipeline {
         stage('Deploy to App VM') {
             steps {
                 sh '''
-                ssh -o StrictHostKeyChecking=no nmk@192.168.100.4 '
+                ssh -o StrictHostKeyChecking=no nmk@192.168.100.6 '
                   cd ~/spring-petclinic
                   git pull origin main
                   docker build -t petclinic-app .
