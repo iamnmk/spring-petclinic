@@ -2,6 +2,20 @@ pipeline {
     agent any
 
     stages {
+        stage('SonarQube Analysis') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                        mvn clean verify sonar:sonar \
+                          -Dsonar.projectKey=spring-petclinic \
+                          -Dsonar.projectName="Spring PetClinic"
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Deploy to App VM') {
             steps {
                 sh '''
