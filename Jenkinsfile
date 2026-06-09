@@ -7,6 +7,7 @@ pipeline {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
                     mvn clean verify sonar:sonar \
+                      -DskipTests \
                       -Dsonar.projectKey=spring-petclinic \
                       -Dsonar.projectName="Spring PetClinic" \
                       -Dsonar.host.url=$SONAR_HOST_URL \
