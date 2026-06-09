@@ -39,4 +39,30 @@ pipeline {
             }
         }
     }
+
+    post {
+        success {
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
+                sh '''
+                curl -X POST -H 'Content-type: application/json' \
+                --data "{
+                  \\"text\\": \\"✅ Deployment Successful!\\nProject: Spring PetClinic\\nBranch: main\\nBuild: #${BUILD_NUMBER}\\nJob: ${JOB_NAME}\\"
+                }" \
+                $SLACK_WEBHOOK
+                '''
+            }
+        }
+
+        failure {
+            withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
+                sh '''
+                curl -X POST -H 'Content-type: application/json' \
+                --data "{
+                  \\"text\\": \\"❌ Deployment Failed!\\nProject: Spring PetClinic\\nBranch: main\\nBuild: #${BUILD_NUMBER}\\nJob: ${JOB_NAME}\\"
+                }" \
+                $SLACK_WEBHOOK
+                '''
+            }
+        }
+    }
 }
