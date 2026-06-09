@@ -4,14 +4,14 @@ pipeline {
     stages {
         stage('SonarQube Analysis') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    withSonarQubeEnv('SonarQube') {
-                        sh '''
-                        mvn clean verify sonar:sonar \
-                          -Dsonar.projectKey=spring-petclinic \
-                          -Dsonar.projectName="Spring PetClinic"
-                        '''
-                    }
+                withSonarQubeEnv('SonarQube') {
+                    sh '''
+                    mvn clean verify sonar:sonar \
+                      -Dsonar.projectKey=spring-petclinic \
+                      -Dsonar.projectName="Spring PetClinic" \
+                      -Dsonar.host.url=$SONAR_HOST_URL \
+                      -Dsonar.token=$SONAR_AUTH_TOKEN
+                    '''
                 }
             }
         }
