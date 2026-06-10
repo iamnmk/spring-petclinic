@@ -17,23 +17,25 @@ pipeline {
             }
         }
 
-        stage('Deploy to App VM') {
+        stage('Deploy to K3s on App VM') {
             steps {
                 sh '''
                 ssh -o StrictHostKeyChecking=no nmk@192.168.100.6 '
                   cd ~/spring-petclinic
+
                   git pull origin main
-                  docker build -t petclinic-app .
-                  docker rm -f petclinic-app || true
-                  docker run -d \
-                    --name petclinic-app \
-                    --network spring-petclinic_default \
-                    -p 8080:8080 \
-                    -e SPRING_PROFILES_ACTIVE=postgres \
-                    -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/petclinic \
-                    -e SPRING_DATASOURCE_USERNAME=petclinic \
-                    -e SPRING_DATASOURCE_PASSWORD=petclinic \
-                    petclinic-app
+
+                  docker build -t petclinic-app:latest .
+
+                  docker save petclinic-app:latest -o petclinic-app.tar
+
+                  sudo k3s ctr images import petclinic-app.tar
+
+                  sudo kubectl apply -f petclinic-k8s.yaml
+
+                  sudo kubectl rollout restart deployment petclinic-app -n petclinic
+
+                  sudo kubectl rollout status deployment petclinic-app -n petclinic
                 '
                 '''
             }
@@ -46,7 +48,7 @@ pipeline {
                 sh '''
                 curl -X POST -H 'Content-type: application/json' \
                 --data "{
-                  \\"text\\": \\"✅ Deployment Successful!\\nProject: Spring PetClinic\\nBranch: main\\nBuild: #${BUILD_NUMBER}\\nJob: ${JOB_NAME}\\"
+                  \\"text\\": \\"✅ K3s Deployment Successful!\\nProject: Spring PetClinic\\nNamespace: petclinic\\nService: petclinic-service\\nURL: http://192.168.100.6:30080\\nBuild: #${BUILD_NUMBER}\\nJob: ${JOB_NAME}\\"
                 }" \
                 $SLACK_WEBHOOK
                 '''
@@ -58,7 +60,7 @@ pipeline {
                 sh '''
                 curl -X POST -H 'Content-type: application/json' \
                 --data "{
-                  \\"text\\": \\"❌ Deployment Failed!\\nProject: Spring PetClinic\\nBranch: main\\nBuild: #${BUILD_NUMBER}\\nJob: ${JOB_NAME}\\"
+                  \\"text\\": \\"❌ K3s Deployment Failed!\\nProject: Spring PetClinic\\nNamespace: petclinic\\nBuild: #${BUILD_NUMBER}\\nJob: ${JOB_NAME}\\"
                 }" \
                 $SLACK_WEBHOOK
                 '''
